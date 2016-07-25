@@ -1,8 +1,8 @@
 
-//-------------------------------------------------------------------
+//-----------------------------------------------------------------------
 //	Name:		Dennis Wu
-//	Project:	Assembly Generation
-//	Due:		May 6, 2016
+//	Project:	Assembly Generation (Assignment #3)
+//	Due:		May 11, 2016
 //	Course:		CPSC 323 Compilers
 //
 //	This program generates a tokens.txt from the Lexer function which
@@ -11,10 +11,14 @@
 //  and generates a symbol table and assembly code into a file 
 //  called assembly.txt
 // 
-//-------------------------------------------------------------------
-// Current limitations:
-//		
-//-------------------------------------------------------------------
+//-----------------------------------------------------------------------
+// Current Limitation:
+//	+ jump function can only store 1 number, displays -999 for others
+//
+// Current Bugs:
+//  + an integer value could be assigned into a boolean variable
+//  + parsing error logic may not be 100% correct 
+//-----------------------------------------------------------------------
 
 #include<iostream>
 #include<fstream>
@@ -98,14 +102,12 @@ int int_symbol_table[300];
 int int_instruct_table[300][2];
 string string_instruct_table[300];
 
-int memeory_address = 5000;
+int memory_address = 5000;
 int total_symbol_items = 0;
 int total_instruct_items = 1;
 int blank = 99999;
 
 int saved_push = 0;
-
-// stack<int> jump_stack; Note: Create function mimicing stack
 
 void check_bool_math();
 
@@ -124,7 +126,6 @@ int instr_address();
 void push_jumpstack(int add);
 
 // ==================== end Assignment 3 code ====================================
-
 
 int main()
 {
@@ -167,7 +168,7 @@ int main()
 	if (rat16s(tokenArray, lexemeArray, pointer))
 	{ 
 		cout << "\n=======================================================================\n";
-		cout << "Symbol Table handling & Assembly Code Generation Sucessful" << endl; 
+		cout << "       Symbol Table handling & Assembly Code Generation Sucessful" << endl; 
 		cout << "=======================================================================\n";
 		cout << "See output file 'assembly.txt' \n" << endl;
 	}
@@ -205,7 +206,6 @@ void NextToken(string tokenArray[], string lexemeArray[])
 	}
 }
 
-
 bool Identifier()
 {
 	if (token == "identifier")
@@ -222,7 +222,6 @@ void WriteSyntax(string tokenArray[], string lexemeArray[])
 		outputFile << "#" << pointer << " Token: " << token << "          Lexeme: " << lexeme << endl; 
 		outputFile << "=======================================================================\n"; } 
 	// REMOVE
-
 }
 
 void ErrorQuit(string errorMsg)
@@ -653,15 +652,28 @@ bool IDs(string tokenArray[], string lexemeArray[], int pointer)
 
 	if (Identifier() || lexeme == ",")
 	{
-		
 		// ============= Assignment 3 Code ===================
-		
 		if (notdeclared)
 		{
 			symbol_entry(lexeme, token);
 		}
 		else
-		{ } 
+		{
+			//cout << "\n=======================================================================\n";
+			//cout << "          ERROR! ERROR! ERROR! ERROR! ERROR! ERROR! ERROR!" << endl; 
+			//cout << "=======================================================================";
+			//cout << "\n      " << token << ": " << lexeme << " is being used without being declared!";
+			//cout << "\n=======================================================================" << endl;
+			//cout << "\nSee output file 'assembly.txt' \n" << endl;
+
+			//outputFile << "\n!ERROR! " << token << ": " << lexeme << " is being used without being declared!" << endl;
+
+			//print_tables();
+
+			//// Terminate
+			//system("pause");
+			//exit(1);
+		}
 		// ============= Assignment 3 Code ===================
 		
 		NextToken(tokenArray, lexemeArray);
@@ -1033,7 +1045,30 @@ bool Read(string tokenArray[], string lexemeArray[], int pointer)
 			
 			NextToken(tokenArray, lexemeArray);
 
+			// ======== Assignment 3 Code =========
 			string Save = lexeme;
+
+			if (check_symbol_table(lexeme))
+			{
+				cout << "\n=======================================================================\n";
+				cout << "          ERROR! ERROR! ERROR! ERROR! ERROR! ERROR! ERROR!" << endl; 
+				cout << "=======================================================================";
+				cout << "\n      " << token << ": " << lexeme << " is being used without being declared!";
+				cout << "\n=======================================================================" << endl;
+				cout << "\nSee output file 'assembly.txt' \n" << endl;
+
+				print_tables();
+
+				outputFile << "\n=======================================================================\n";
+				outputFile << "          ERROR! ERROR! ERROR! ERROR! ERROR! ERROR! ERROR!" << endl; 
+				outputFile << "=======================================================================";
+				outputFile << "\n" << token << ": " << lexeme << " is being used without being declared!" << endl;
+
+				// Terminate
+				system("pause");
+				exit(1);			
+			}
+			// ======== Assignment 3 Code =========
 
 			if (IDs(tokenArray, lexemeArray, pointer))
 			{
@@ -1085,7 +1120,7 @@ bool While(string tokenArray[], string lexemeArray[], int pointer)
 	{
 		// ======== Assignment 3 Code =========
 		int Addr = instr_address();
-		gen_instr("LABLE", blank);
+		gen_instr("LABEL", blank);
 		// ======== Assignment 3 Code =========
 
 		NextToken(tokenArray, lexemeArray);
@@ -1306,7 +1341,6 @@ bool ExpressionPrime(string tokenArray[], string lexemeArray[], int pointer)
 			}
 			// ======== Assignment 3 Code =========
 
-
 			if (ExpressionPrime(tokenArray, lexemeArray, pointer))
 			{ valid = true;	}           
 		}
@@ -1327,7 +1361,6 @@ bool Term(string tokenArray[], string lexemeArray[], int pointer)
 	// <Term> ::= <Factor> <Term Prime> | <Factor>
 
 	bool valid = false;
-
 
 	if (Factor(tokenArray, lexemeArray, pointer))
 	{	
@@ -1549,9 +1582,12 @@ void check_bool_math()
 	int x = total_instruct_items - 3;
 	int y = total_instruct_items - 2;
 
-	bool passx, passy;
+	bool passx = true;
+	bool passy = true;
+
 	int temp;
-	string str;
+
+	string type;
 
 	if (string_instruct_table[x] == "PUSHM")
 	{
@@ -1561,9 +1597,9 @@ void check_bool_math()
 		{
 			if (int_symbol_table[i] == temp)
 			{
-				str = string_symbol_table[i][1];
+				type = string_symbol_table[i][1];
 
-				if (str == "boolean")
+				if (type == "boolean")
 				{ passx = false; }
 				else 
 				{ passx = true; }
@@ -1580,10 +1616,10 @@ void check_bool_math()
 		for (int i = 0; i < total_symbol_items; i++)
 		{
 			if (int_symbol_table[y] == temp)
-			{ str = string_symbol_table[y][1]; }
+			{ type = string_symbol_table[y][1]; }
 		}
 
-		if (str == "boolean")
+		if (type == "boolean")
 		{ passy = false; }
 		else 
 		{ passy = true; }
@@ -1592,10 +1628,8 @@ void check_bool_math()
 	else
 	{ passy = true; }
 
-	// Display error msg if boolean math is wrong
-	if (passx && passy)
-	{ }
-	else
+	// Display error msg if type boolean
+	if ((!passx) && (!passy))
 	{
 		cout << "\nCannot do math operations on Boolean type!\n";
 		outputFile << "\nCannot do math operations on Boolean type!  Line: " << total_instruct_items-1 << "\n";
@@ -1607,24 +1641,19 @@ void check_bool_math()
 void symbol_entry(string lexeme, string token)
 {
 	if (check_symbol_table(lexeme))
-	{
-		// Identifier
+	{ 
 		string_symbol_table[total_symbol_items][0] = lexeme;
-		// Memory Location
-		int_symbol_table[total_symbol_items] = memeory_address;
-		// Type
+		int_symbol_table[total_symbol_items] = memory_address;
 		string_symbol_table[total_symbol_items][1] = type;
 
-		// Update
-		memeory_address++;
+		memory_address++;
 		total_symbol_items++;
 	}
 	else
 	{
-		cout << "Error! Item " << lexeme << " is already in the Symbol Table.";
+		cout << "\nError! Item " << lexeme << " is already in the Symbol Table.";
+		outputFile << "\nError! Item " << lexeme << " is already in the Symbol Table.\n";
 	}
-
-
 }
 
 void gen_instr(string instruction, int address = -999)
@@ -1708,7 +1737,9 @@ void print_tables()
 }
 
 int instr_address()
-{ return total_instruct_items; }
+{ 
+	return total_instruct_items; 
+}
 
 void push_jumpstack(int add)
 {

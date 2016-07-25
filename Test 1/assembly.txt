@@ -1,0 +1,17 @@
+	 Assembly Code Listing
+
+1		PUSHM		5001
+2		PUSHM		5002
+3		PUSHM		5003
+4		MUL
+5		ADD
+6		POPM		5000
+
+
+			 Symbol Table
+____________________________________________________________________________
+Identifier		 Memory Location		 Type
+x				5000			integer
+a				5001			integer
+b				5002			integer
+c				5003			integer

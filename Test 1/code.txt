@@ -1,8 +1,8 @@
 [* this comment for this sample test case*]
 
 $$
-integer i, max;
+integer x, a, b, c;
 $$
-while(i < max)
-i := i + 1;
+
+x:= a + b * c;
 $$
